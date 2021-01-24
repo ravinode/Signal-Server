@@ -258,11 +258,11 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
     ExternalServiceCredentialGenerator storageCredentialsGenerator = new ExternalServiceCredentialGenerator(config.getSecureStorageServiceConfiguration().getUserAuthenticationTokenSharedSecret(), new byte[0], false);
     ExternalServiceCredentialGenerator backupCredentialsGenerator  = new ExternalServiceCredentialGenerator(config.getSecureBackupServiceConfiguration().getUserAuthenticationTokenSharedSecret(), new byte[0], false);
 
-    ApnFallbackManager       apnFallbackManager  = new ApnFallbackManager(pushSchedulerClient, apnSender, accountsManager);
+    //ApnFallbackManager       apnFallbackManager  = new ApnFallbackManager(pushSchedulerClient, apnSender, accountsManager);
     TwilioSmsSender          twilioSmsSender     = new TwilioSmsSender(config.getTwilioConfiguration());
     SmsSender                smsSender           = new SmsSender(twilioSmsSender);
-    PushSender               pushSender          = new PushSender(apnFallbackManager, gcmSender, apnSender, websocketSender, config.getPushConfiguration().getQueueSize());
-    ReceiptSender            receiptSender       = new ReceiptSender(accountsManager, pushSender);
+    //PushSender               pushSender          = new PushSender(apnFallbackManager, gcmSender, apnSender, websocketSender, config.getPushConfiguration().getQueueSize());
+    //ReceiptSender            receiptSender       = new ReceiptSender(accountsManager, pushSender);
     TurnTokenGenerator       turnTokenGenerator  = new TurnTokenGenerator(config.getTurnConfiguration());
     RecaptchaClient          recaptchaClient     = new RecaptchaClient(config.getRecaptchaConfiguration().getSecret());
 
@@ -278,12 +278,12 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
     AccountDatabaseCrawlerCache accountDatabaseCrawlerCache = new AccountDatabaseCrawlerCache(cacheClient);
     AccountDatabaseCrawler      accountDatabaseCrawler      = new AccountDatabaseCrawler(accountsManager, accountDatabaseCrawlerCache, accountDatabaseCrawlerListeners, config.getAccountDatabaseCrawlerConfiguration().getChunkSize(), config.getAccountDatabaseCrawlerConfiguration().getChunkIntervalMs());
 
-    messagesCache.setPubSubManager(pubSubManager, pushSender);
+    //messagesCache.setPubSubManager(pubSubManager, pushSender);
 
-    apnSender.setApnFallbackManager(apnFallbackManager);
-    environment.lifecycle().manage(apnFallbackManager);
+    //apnSender.setApnFallbackManager(apnFallbackManager);
+    //environment.lifecycle().manage(apnFallbackManager);
     environment.lifecycle().manage(pubSubManager);
-    environment.lifecycle().manage(pushSender);
+    //environment.lifecycle().manage(pushSender);
     environment.lifecycle().manage(messagesCache);
     environment.lifecycle().manage(accountDatabaseCrawler);
     environment.lifecycle().manage(remoteConfigsManager);
@@ -303,7 +303,7 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
     AttachmentControllerV2 attachmentControllerV2    = new AttachmentControllerV2(rateLimiters, config.getAwsAttachmentsConfiguration().getAccessKey(), config.getAwsAttachmentsConfiguration().getAccessSecret(), config.getAwsAttachmentsConfiguration().getRegion(), config.getAwsAttachmentsConfiguration().getBucket());
     AttachmentControllerV3 attachmentControllerV3    = new AttachmentControllerV3(rateLimiters, config.getGcpAttachmentsConfiguration().getDomain(), config.getGcpAttachmentsConfiguration().getEmail(), config.getGcpAttachmentsConfiguration().getMaxSizeInBytes(), config.getGcpAttachmentsConfiguration().getPathPrefix(), config.getGcpAttachmentsConfiguration().getRsaSigningKey());
     KeysController         keysController            = new KeysController(rateLimiters, keys, accountsManager, directoryQueue);
-    MessageController      messageController         = new MessageController(rateLimiters, pushSender, receiptSender, accountsManager, messagesManager, apnFallbackManager);
+    //MessageController      messageController         = new MessageController(rateLimiters, pushSender, receiptSender, accountsManager, messagesManager, apnFallbackManager);
     ProfileController      profileController         = new ProfileController(rateLimiters, accountsManager, profilesManager, usernamesManager, cdnS3Client, profileCdnPolicyGenerator, profileCdnPolicySigner, config.getCdnConfiguration().getBucket(), zkProfileOperations, isZkEnabled);
     StickerController      stickerController         = new StickerController(rateLimiters, config.getCdnConfiguration().getAccessKey(), config.getCdnConfiguration().getAccessSecret(), config.getCdnConfiguration().getRegion(), config.getCdnConfiguration().getBucket());
     RemoteConfigController remoteConfigController    = new RemoteConfigController(remoteConfigsManager, config.getRemoteConfigConfiguration().getAuthorizedTokens());
@@ -318,7 +318,7 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
     environment.jersey().register(new AccountController(pendingAccountsManager, accountsManager, usernamesManager, abusiveHostRules, rateLimiters, smsSender, directoryQueue, messagesManager, turnTokenGenerator, config.getTestDevices(), recaptchaClient, gcmSender, apnSender, backupCredentialsGenerator));
     environment.jersey().register(new DeviceController(pendingDevicesManager, accountsManager, messagesManager, directoryQueue, rateLimiters, config.getMaxDevices()));
     environment.jersey().register(new DirectoryController(rateLimiters, directory, directoryCredentialsGenerator));
-    environment.jersey().register(new ProvisioningController(rateLimiters, pushSender));
+   // environment.jersey().register(new ProvisioningController(rateLimiters, pushSender));
     environment.jersey().register(new CertificateController(new CertificateGenerator(config.getDeliveryCertificate().getCertificate(), config.getDeliveryCertificate().getPrivateKey(), config.getDeliveryCertificate().getExpiresDays()), zkAuthOperations, isZkEnabled));
     environment.jersey().register(new VoiceVerificationController(config.getVoiceVerificationConfiguration().getUrl(), config.getVoiceVerificationConfiguration().getLocales()));
     environment.jersey().register(new SecureStorageController(storageCredentialsGenerator));
@@ -327,7 +327,7 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
     environment.jersey().register(attachmentControllerV2);
     environment.jersey().register(attachmentControllerV3);
     environment.jersey().register(keysController);
-    environment.jersey().register(messageController);
+    //environment.jersey().register(messageController);
     environment.jersey().register(profileController);
     environment.jersey().register(stickerController);
     environment.jersey().register(remoteConfigController);
@@ -335,9 +335,9 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
     ///
     WebSocketEnvironment<Account> webSocketEnvironment = new WebSocketEnvironment<>(environment, config.getWebSocketConfiguration(), 90000);
     webSocketEnvironment.setAuthenticator(new WebSocketAccountAuthenticator(accountAuthenticator));
-    webSocketEnvironment.setConnectListener(new AuthenticatedConnectListener(pushSender, receiptSender, messagesManager, pubSubManager, apnFallbackManager));
-    webSocketEnvironment.jersey().register(new KeepAliveController(pubSubManager));
-    webSocketEnvironment.jersey().register(messageController);
+    //webSocketEnvironment.setConnectListener(new AuthenticatedConnectListener(pushSender, receiptSender, messagesManager, pubSubManager, apnFallbackManager));
+    //webSocketEnvironment.jersey().register(new KeepAliveController(pubSubManager));
+    //webSocketEnvironment.jersey().register(messageController);
     webSocketEnvironment.jersey().register(profileController);
     webSocketEnvironment.jersey().register(attachmentControllerV1);
     webSocketEnvironment.jersey().register(attachmentControllerV2);
