@@ -243,7 +243,7 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
     DeadLetterHandler          deadLetterHandler          = new DeadLetterHandler(messagesManager);
     DispatchManager            dispatchManager            = new DispatchManager(pubSubClientFactory, Optional.of(deadLetterHandler));
     PubSubManager              pubSubManager              = new PubSubManager(pubsubClient, dispatchManager);
-    APNSender                  apnSender                  = new APNSender(accountsManager, config.getApnConfiguration());
+    //APNSender                  apnSender                  = new APNSender(accountsManager, config.getApnConfiguration());
     GCMSender                  gcmSender                  = new GCMSender(accountsManager, config.getGcmConfiguration().getApiKey());
     WebsocketSender            websocketSender            = new WebsocketSender(messagesManager, pubSubManager);
     RateLimiters               rateLimiters               = new RateLimiters(config.getLimitsConfiguration(), cacheClient);
@@ -315,7 +315,7 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
                                                                                       DisabledPermittedAccount.class, disabledPermittedAccountAuthFilter)));
     environment.jersey().register(new PolymorphicAuthValueFactoryProvider.Binder<>(ImmutableSet.of(Account.class, DisabledPermittedAccount.class)));
 
-    environment.jersey().register(new AccountController(pendingAccountsManager, accountsManager, usernamesManager, abusiveHostRules, rateLimiters, smsSender, directoryQueue, messagesManager, turnTokenGenerator, config.getTestDevices(), recaptchaClient, gcmSender, apnSender, backupCredentialsGenerator));
+   // environment.jersey().register(new AccountController(pendingAccountsManager, accountsManager, usernamesManager, abusiveHostRules, rateLimiters, smsSender, directoryQueue, messagesManager, turnTokenGenerator, config.getTestDevices(), recaptchaClient, gcmSender, apnSender, backupCredentialsGenerator));
     environment.jersey().register(new DeviceController(pendingDevicesManager, accountsManager, messagesManager, directoryQueue, rateLimiters, config.getMaxDevices()));
     environment.jersey().register(new DirectoryController(rateLimiters, directory, directoryCredentialsGenerator));
    // environment.jersey().register(new ProvisioningController(rateLimiters, pushSender));
